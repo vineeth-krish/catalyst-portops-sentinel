@@ -310,22 +310,32 @@ http://localhost:8501
 ```
 ## Screenshots
 
-### Dynamic Telemetry and Discovery
+### 1. Dynamic Telemetry and Discovery
 The platform authenticates with Catalyst Center to map device UUIDs and pull real-time physical interface operational states into a NOC-friendly dashboard.
 
-![Dynamic Telemetry](assets/1_telemetry.png)
+![Dashboard Initial State](assets/1_dashboard_initial.png)
 
-### Zero-Trust ChatOps Escalation
-When direct configuration execution is blocked by lab RBAC policies, the system intercepts the intent and generates a structured JSON remediation ticket for NOC/ITSM approval.
+### 2. Catalyst Center State Validation
+The physical switch state exactly mirrors the dashboard state natively inside Cisco Catalyst Center.
 
-![ChatOps Escalation](assets/2_escalation_ticket.png)
+![Catalyst Center Initial State](assets/2_dnac_initial.png)
 
-### State Verification (Closed-Loop)
-Optimistic UI state verification confirming that the administrative and operational statuses of the targeted port successfully reflect the isolation intent.
+### 3. Incident Remediation (Port Shutdown)
+Authorized operators can isolate a switch port by triggering a `shutdown` command. The dashboard instantly registers the new isolated status.
 
-![State Verification](assets/3_state_verification.png)
+![Dashboard Port Shutdown](assets/3_dashboard_shutdown.png)
 
-### Incident Remediation
-1-click intent reversal utilizing the `no shutdown` payload to restore network access once a security incident is cleared.
+### 4. Catalyst Center Template Verification
+The application uses the Template Programmer API to seamlessly push the configuration template to Catalyst Center, which applies the shutdown to the physical device.
 
-![Incident Remediation](assets/4_remediation.png)
+![Catalyst Center Port Shutdown](assets/4_dnac_shutdown.png)
+
+### 5. Incident Recovery (No Shutdown)
+Once the incident is cleared, a 1-click intent reversal utilizing the `no shutdown` payload restores network access dynamically.
+
+![Dashboard Port Recovery](assets/5_dashboard_recovery.png)
+
+### 6. Closed-Loop Recovery Verification
+Catalyst Center synchronizes the configuration state back to normal, verifying the port is up and operational.
+
+![Catalyst Center Port Recovery](assets/6_dnac_recovery.png)

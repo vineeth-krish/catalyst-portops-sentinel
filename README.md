@@ -44,9 +44,7 @@ As a result, enterprise incident containment becomes slow, inconsistent, and hea
 
 The platform continuously monitors interface telemetry and enables authorized operators to execute **Layer 2 port isolation actions** (`shutdown` / `no shutdown`) through an intuitive dashboard.
 
-When enterprise RBAC policies block direct execution, the system intelligently transitions into a **ChatOps escalation workflow**, automatically generating structured remediation payloads for senior engineers or ITSM systems.
-
-This ensures incident response continues without workflow disruption.
+When enterprise Intent APIs enforce strict "access-port only" restrictions, the system dynamically leverages the **Catalyst Center Template Programmer API** to programmatically generate and deploy raw CLI configuration templates (via Velocity Template Language - VTL). This ensures that operations teams can enforce remediation on *any* port (including uplinks or core routed ports) without workflow disruption.
 
 ---
 
@@ -83,43 +81,32 @@ Reduces security containment delays and minimizes lateral movement risk.
 
 ---
 
-## 3. Intelligent RBAC Failure Handling
+## 3. Bypassing Intent API Restrictions via Template Programmer
 
-In enterprise environments, direct execution may fail due to permission restrictions.
+In enterprise environments, standard Intent APIs (like `PUT /interface`) actively block administrative changes to core uplinks and routed ports.
 
-Instead of crashing or silently failing, the platform:
+Instead of failing, the platform:
 
-* Detects authorization failures
-* Gracefully handles API exceptions
-* Preserves workflow continuity
+* Dynamically creates a Catalyst Center Template project (`PortOps_Automation`).
+* Writes and commits a Velocity (VTL) CLI template for the target switch.
+* Uses the **Template Programmer API** to deploy raw CLI commands (`interface X`, `shutdown`) directly to the device.
 
 ### Impact
 
-Prevents automation breakdowns in Zero-Trust environments.
+Enables full operational control over *any* switch interface, completely bypassing standard API safety restrictions natively within Catalyst Center.
 
 ---
 
-## 4. ChatOps Escalation Engine
+## 4. Intelligent Telemetry and State Management
 
-If remediation cannot be executed directly, the platform automatically generates a structured JSON escalation payload containing:
+The platform ensures a snappy user experience by implementing an **Optimistic UI Override** engine using Streamlit Session State. 
 
-* Device information
-* Interface identifiers
-* Incident context
-* Required remediation action
-* RESTCONF / IOS-XE payload
-
-This payload can be directly integrated into:
-
-* ServiceNow
-* Microsoft Teams
-* Slack
-* Webhooks
-* Enterprise ticketing systems
+* **Bidirectional Memory**: Remembers which ports were dynamically isolated or enabled during the session.
+* **Instant Feedback**: Forces the dashboard UI to instantly reflect the target state while Catalyst Center asynchronously pushes the Template deployment to the physical hardware in the background.
 
 ### Impact
 
-Enables seamless collaboration between junior operators and senior engineers while maintaining governance.
+Provides a seamless, highly responsive NOC dashboard without waiting for long Catalyst Center polling cycles.
 
 ---
 
@@ -160,13 +147,12 @@ Operators trigger:
 * Shutdown
 * Port Recovery (`no shutdown`)
 
-### Step 5 — RBAC Decision Engine
+### Step 5 — Automated Template Deployment
 
-**If Allowed**
-→ Execute configuration directly.
-
-**If Blocked**
-→ Generate ChatOps escalation payload.
+**Catalyst Center Template Programmer API** is utilized to dynamically:
+1. Ensure the `PortOps_Automation` project exists.
+2. Commit the required CLI template using VTL variables.
+3. Deploy the template (executing the configuration) against the target device.
 
 ### Step 6 — State Verification
 
@@ -182,11 +168,13 @@ Interface telemetry is revalidated for closed-loop confirmation.
 
 ✅ Intent-based Layer 2 remediation
 
-✅ Zero-Trust RBAC-aware execution handling
+✅ Zero-Trust Intent-Based Remediation
 
-✅ ChatOps escalation workflow
+✅ Dynamic Catalyst Center Template Generation (Velocity/VTL)
 
-✅ Structured JSON incident payload generation
+✅ Automated Template Programmer API Deployment
+
+✅ Full control over all ports (bypassing Intent API access-port limitations)
 
 ✅ Closed-loop operational verification
 

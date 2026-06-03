@@ -6,6 +6,7 @@ from pathlib import Path
 root_path = Path(__file__).resolve().parent.parent
 sys.path.append(str(root_path))
 
+# pyrefly: ignore [missing-import]
 import streamlit as st
 import pandas as pd
 from core.inventory import get_network_devices, get_device_interfaces
@@ -21,6 +22,8 @@ st.markdown("Enterprise automated port management and zero-trust isolation platf
 # We now store both the isolated ports AND the incident ticket in memory
 if "isolated_ports" not in st.session_state:
     st.session_state.isolated_ports = []
+if "enabled_ports" not in st.session_state:
+    st.session_state.enabled_ports = []
 if "incident_ticket" not in st.session_state:
     st.session_state.incident_ticket = None
 
@@ -56,19 +59,27 @@ with st.spinner(f"Querying interface telemetry for {selected_hostname}..."):
 
 if interfaces:
     port_data = []
+    if "port_uuid_map" not in st.session_state:
+        st.session_state.port_uuid_map = {}
+
     for interface in interfaces:
         name = interface.get("portName", "")
         
         if "Vlan" not in name and "Loopback" not in name:
             
+            st.session_state.port_uuid_map[name] = interface.get("id")
+            
             # --- Optimistic UI Override ---
             current_admin_status = interface.get("adminStatus")
             current_op_status = interface.get("status")
             
-            # If the port is in our memory, force it to DOWN
+            # If the port is in our memory, force it to DOWN or UP
             if name in st.session_state.isolated_ports:
                 current_admin_status = "DOWN"
                 current_op_status = "down"
+            elif name in st.session_state.enabled_ports:
+                current_admin_status = "UP"
+                current_op_status = "up"
             # --------------------------------------------
 
             port_data.append({
@@ -102,14 +113,20 @@ with col3:
     if st.button("🚀 Execute Configuration", type="primary"):
         with st.spinner(f"Initiating zero-trust workflow for {selected_hostname}..."):
             
-            success, alert_data = change_port_state(selected_device_ip, target_port, state=action)
+            success, alert_data = change_port_state(selected_device_uuid, selected_device_ip, target_port, state=action)
             
             if success:
-                # 1. Update the isolated ports memory
-                if action == "shutdown" and target_port not in st.session_state.isolated_ports:
-                    st.session_state.isolated_ports.append(target_port)
-                elif action == "no shutdown" and target_port in st.session_state.isolated_ports:
-                    st.session_state.isolated_ports.remove(target_port)
+                # 1. Update the isolated/enabled ports memory
+                if action == "shutdown":
+                    if target_port not in st.session_state.isolated_ports:
+                        st.session_state.isolated_ports.append(target_port)
+                    if target_port in st.session_state.enabled_ports:
+                        st.session_state.enabled_ports.remove(target_port)
+                elif action == "no shutdown":
+                    if target_port not in st.session_state.enabled_ports:
+                        st.session_state.enabled_ports.append(target_port)
+                    if target_port in st.session_state.isolated_ports:
+                        st.session_state.isolated_ports.remove(target_port)
                 
                 # 2. Save the ticket to memory so it survives the refresh
                 st.session_state.incident_ticket = alert_data
@@ -120,11 +137,10 @@ with col3:
                 else:
                     st.experimental_rerun()
             else:
-                st.error("Failed to generate escalation payload.")
+                st.error(f"Failed to execute configuration: {alert_data.get('error', 'Unknown error')}")
 
 # --- Dynamic Ticket Display ---
 # Because this is outside the button logic, it will display perfectly after the rerun!
 if st.session_state.incident_ticket:
-    st.warning("⚠️ Direct execution blocked by RBAC. SecOps Escalation Triggered.")
-    st.success(f"Incident Ticket generated for {st.session_state.incident_ticket['target_interface']}.")
+    st.success(f"✅ Configuration executed successfully on {st.session_state.incident_ticket['target_interface']} via Catalyst Center Command Runner.")
     st.json(st.session_state.incident_ticket)

@@ -1,66 +1,325 @@
 # Catalyst PortOps Sentinel
 
-Enterprise intent-based network automation and ChatOps incident response platform powered by Cisco Catalyst Center (DNAC).
-
-## Project Overview
-
-In modern enterprise networks, Zero-Trust architectures and strict Role-Based Access Control (RBAC) often prevent direct script-based execution on edge devices. Catalyst PortOps Sentinel is a resilient, API-driven Python application designed to bridge the gap between network telemetry and IT Service Management (ITSM). 
-
-It provides Network Operations Center (NOC) teams with a dynamic dashboard to monitor physical interface telemetry and execute automated incident remediation. If direct execution is blocked by enterprise RBAC policies, the system automatically pivots to a ChatOps Escalation Workflow, generating structured JSON remediation payloads for senior engineering approval.
-
-## Key Features
-
-- **Dynamic Network Telemetry:** Integrates with Cisco Catalyst Center REST APIs to auto-discover network devices (UUIDs) and poll real-time physical interface statuses (Admin/Operational).
-- **Intent-Based Automation:** Executes Layer 2 interface state changes (`shutdown` / `no shutdown`) to isolate compromised network ports instantly.
-- **Intelligent RBAC Handling:** Detects API permission restrictions and prevents application crashes via graceful exception handling.
-- **ChatOps Escalation Engine:** Automatically generates structured JSON incident tickets containing the exact IOS-XE/RESTCONF remediation payloads required to resolve the issue, ready for Webhook/ServiceNow integration.
-- **Optimistic UI State Management:** Utilizes Streamlit's session state to provide immediate visual feedback on interface status changes prior to controller polling cycles.
-
-## Technology Stack
-
-- **Language:** Python 3.10+
-- **Frontend UI:** Streamlit, Pandas (Dataframes)
-- **Backend Core:** `requests`, REST APIs, JSON Web Tokens (JWT)
-- **Networking Context:** Cisco Catalyst Center (DNA Center) Intent APIs, Cisco IOS-XE, RESTCONF (YANG Models), Layer 2 Forwarding Logic.
-- **Security:** `python-dotenv` for strict environment variable secrets management.
+Enterprise Intent-Based Network Automation and ChatOps Incident Response Platform powered by Cisco Catalyst Center (DNAC)
 
 ---
 
-## Getting Started
+# Problem Statement
 
-### Prerequisites
+Modern enterprise networks operate under **Zero-Trust security architectures** and strict **Role-Based Access Control (RBAC)** policies. These restrictions often prevent junior engineers, automation scripts, or Network Operations Center (NOC) teams from directly making configuration changes on network infrastructure devices.
 
-- Python 3.8 or higher installed on your local machine.
-- Access to a Cisco DevNet Catalyst Center Sandbox (or a production DNAC appliance).
+During security incidents such as:
 
-### Setup and Installation
+* Rogue endpoint detection
+* Unauthorized switch port activity
+* Suspicious MAC movement
+* Compromised employee devices
+* VLAN misuse or endpoint abuse
 
-Clone the repository, initialize your virtual environment, and install the required dependencies:
+network teams must rapidly isolate affected switch interfaces to prevent lateral movement or operational impact.
 
-    git clone https://github.com/vineeth-krish/catalyst-portops-sentinel.git
-    cd catalyst-portops-sentinel
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install streamlit pandas requests python-dotenv urllib3
+However, enterprise realities introduce major challenges:
 
-### Environment Variables
+### Existing Problems
 
-This project requires strict secrets management. Never commit credentials to GitHub. Create a `.env` file in the root directory and add your controller/sandbox credentials:
+1. **Slow Manual Incident Response**
+   NOC engineers often rely on senior administrators to manually log into devices and disable interfaces, increasing Mean Time to Resolution (MTTR).
 
-    DNAC_BASE_URL=https://<YOUR_CONTROLLER_IP>
-    DNAC_USER=<YOUR_USERNAME>
-    DNAC_PASSWORD=<YOUR_PASSWORD>
+2. **RBAC Restrictions**
+   Automation workflows may fail because Catalyst Center or network devices deny direct configuration execution due to permission boundaries.
 
-### Usage
+3. **Lack of Closed-Loop Visibility**
+   Engineers cannot instantly verify whether administrative actions successfully impacted operational port states.
 
-Run the Streamlit dashboard locally:
+4. **Poor ITSM Integration**
+   Failed automation attempts rarely generate structured escalation workflows, forcing engineers to manually document remediation steps.
 
-    streamlit run dashboard/app.py
-
-The application will launch in your default web browser at `http://localhost:8501`.
+As a result, enterprise incident containment becomes slow, inconsistent, and heavily dependent on privileged personnel.
 
 ---
 
+# Proposed Solution
+
+**Catalyst PortOps Sentinel** is an **intent-based network automation platform** designed to enable rapid, controlled, and enterprise-safe switch port remediation using **Cisco Catalyst Center APIs**.
+
+The platform continuously monitors interface telemetry and enables authorized operators to execute **Layer 2 port isolation actions** (`shutdown` / `no shutdown`) through an intuitive dashboard.
+
+When enterprise RBAC policies block direct execution, the system intelligently transitions into a **ChatOps escalation workflow**, automatically generating structured remediation payloads for senior engineers or ITSM systems.
+
+This ensures incident response continues without workflow disruption.
+
+---
+
+# How the System Solves the Problem
+
+## 1. Dynamic Network Telemetry
+
+The platform authenticates with **Cisco Catalyst Center APIs** to automatically discover devices and retrieve real-time interface telemetry.
+
+Instead of manually identifying switch IDs or interface metadata, the system dynamically:
+
+* Maps network device UUIDs
+* Discovers interface inventories
+* Tracks administrative and operational states
+
+### Impact
+
+Reduces manual investigation effort and accelerates visibility for NOC teams.
+
+---
+
+## 2. Instant Port Isolation
+
+During an incident, operators can immediately isolate a suspicious endpoint by administratively shutting down the associated switch interface.
+
+Supported actions include:
+
+* `shutdown`
+* `no shutdown`
+
+### Impact
+
+Reduces security containment delays and minimizes lateral movement risk.
+
+---
+
+## 3. Intelligent RBAC Failure Handling
+
+In enterprise environments, direct execution may fail due to permission restrictions.
+
+Instead of crashing or silently failing, the platform:
+
+* Detects authorization failures
+* Gracefully handles API exceptions
+* Preserves workflow continuity
+
+### Impact
+
+Prevents automation breakdowns in Zero-Trust environments.
+
+---
+
+## 4. ChatOps Escalation Engine
+
+If remediation cannot be executed directly, the platform automatically generates a structured JSON escalation payload containing:
+
+* Device information
+* Interface identifiers
+* Incident context
+* Required remediation action
+* RESTCONF / IOS-XE payload
+
+This payload can be directly integrated into:
+
+* ServiceNow
+* Microsoft Teams
+* Slack
+* Webhooks
+* Enterprise ticketing systems
+
+### Impact
+
+Enables seamless collaboration between junior operators and senior engineers while maintaining governance.
+
+---
+
+## 5. Closed-Loop State Verification
+
+The system validates remediation success by rechecking interface telemetry after intent execution.
+
+It verifies:
+
+* Administrative state
+* Operational state
+* Port transition success
+
+### Impact
+
+Provides confidence that remediation was actually enforced.
+
+---
+
+# Architecture Overview
+
+### Step 1 — Authentication
+
+The application authenticates with Cisco Catalyst Center using REST APIs and secure environment variables.
+
+### Step 2 — Device Discovery
+
+Network devices are dynamically discovered using UUID mapping.
+
+### Step 3 — Telemetry Collection
+
+Physical interface statuses are continuously polled.
+
+### Step 4 — Intent Execution
+
+Operators trigger:
+
+* Shutdown
+* Port Recovery (`no shutdown`)
+
+### Step 5 — RBAC Decision Engine
+
+**If Allowed**
+→ Execute configuration directly.
+
+**If Blocked**
+→ Generate ChatOps escalation payload.
+
+### Step 6 — State Verification
+
+Interface telemetry is revalidated for closed-loop confirmation.
+
+---
+
+# Key Features
+
+✅ Dynamic device discovery using Catalyst Center APIs
+
+✅ Real-time interface telemetry monitoring
+
+✅ Intent-based Layer 2 remediation
+
+✅ Zero-Trust RBAC-aware execution handling
+
+✅ ChatOps escalation workflow
+
+✅ Structured JSON incident payload generation
+
+✅ Closed-loop operational verification
+
+✅ Optimistic UI feedback using Streamlit Session State
+
+---
+
+# Technology Stack
+
+## Frontend
+
+* Streamlit
+* Pandas DataFrames
+
+## Backend
+
+* Python 3.10+
+* Requests
+* JSON
+* JWT Authentication
+
+## Networking
+
+* Cisco Catalyst Center APIs
+* Cisco IOS-XE
+* RESTCONF
+* YANG Models
+
+## Security
+
+* python-dotenv
+* Environment Variable Secrets Management
+
+---
+
+# Repository Structure
+
+```bash
+catalyst-portops-sentinel/
+│── dashboard/
+│   ├── app.py
+│
+│── core/
+│   ├── auth.py
+│   ├── telemetry.py
+│   ├── remediation.py
+│   ├── escalation.py
+│
+│── assets/
+│   ├── 1_telemetry.png
+│   ├── 2_escalation_ticket.png
+│   ├── 3_state_verification.png
+│   ├── 4_remediation.png
+│
+│── .env
+│── requirements.txt
+│── README.md
+```
+
+---
+
+# Future Improvements
+
+* Real-time anomaly detection
+* Syslog-triggered automated isolation
+* Slack/MS Teams webhook integration
+* ServiceNow incident automation
+* Role-aware approval workflows
+* AI-assisted remediation recommendations
+
+---
+
+# Why This Project Matters
+
+Catalyst PortOps Sentinel demonstrates practical skills in:
+
+* Network Automation
+* Enterprise Networking
+* API Engineering
+* Python Development
+* RBAC-aware Systems Design
+* Zero-Trust Networking
+* Incident Response Automation
+* ChatOps Workflows
+* ITSM Integration Concepts
+
+Rather than simply automating switch commands, this project simulates how **real enterprise network operations teams handle security incidents under operational constraints**.
+
+---
+
+# Setup Instructions
+
+## Clone Repository
+
+```bash
+git clone https://github.com/vineeth-krish/catalyst-portops-sentinel.git
+cd catalyst-portops-sentinel
+```
+
+## Create Virtual Environment
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+## Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+## Configure Environment Variables
+
+Create a `.env` file:
+
+```env
+DNAC_BASE_URL=https://<YOUR_CONTROLLER_IP>
+DNAC_USER=<YOUR_USERNAME>
+DNAC_PASSWORD=<YOUR_PASSWORD>
+```
+
+## Run Application
+
+```bash
+streamlit run dashboard/app.py
+```
+
+The dashboard launches at:
+
+```bash
+http://localhost:8501
+```
 ## Screenshots
 
 ### Dynamic Telemetry and Discovery

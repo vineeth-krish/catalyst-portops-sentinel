@@ -214,8 +214,8 @@ Interface telemetry is revalidated for closed-loop confirmation.
 
 ```bash
 catalyst-portops-sentinel/
-│── dashboard/
-│   ├── app.py
+│── config/
+│   ├── settings.py
 │
 │── core/
 │   ├── auth.py
@@ -223,16 +223,29 @@ catalyst-portops-sentinel/
 │   ├── remediation.py
 │   ├── escalation.py
 │
+│── dashboard/
+│   ├── app.py
+│
+│── utils/
+│   ├── discovery.py
+│
+│── tests/
+│   ├── test_run.py
+│
 │── assets/
-│   ├── 1_telemetry.png
-│   ├── 2_escalation_ticket.png
-│   ├── 3_state_verification.png
-│   ├── 4_remediation.png
+│   ├── 1_dashboard_initial.png
+│   ├── 2_dnac_initial.png
+│   ├── 3_dashboard_shutdown.png
+│   ├── 4_dnac_shutdown.png
+│   ├── 5_dashboard_recovery.png
+│   ├── 6_dnac_recovery.png
 │
 │── .env
+│── .gitignore
 │── requirements.txt
 │── README.md
 ```
+
 
 ---
 

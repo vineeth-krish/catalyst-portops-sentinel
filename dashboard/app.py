@@ -9,8 +9,9 @@ sys.path.append(str(root_path))
 # pyrefly: ignore [missing-import]
 import streamlit as st
 import pandas as pd
-from core.inventory import get_network_devices, get_device_interfaces
-from core.port_manager import change_port_state
+from core.telemetry import get_network_devices, get_device_interfaces
+from core.remediation import change_port_state
+from core.escalation import escalate_incident
 
 # --- UI Configuration ---
 st.set_page_config(page_title="PortOps Sentinel", page_icon="🛡️", layout="wide")
@@ -131,7 +132,10 @@ with col3:
                 # 2. Save the ticket to memory so it survives the refresh
                 st.session_state.incident_ticket = alert_data
                 
-                # 3. Force the app to instantly reload from top to bottom
+                # 3. Escalate the incident (ChatOps / ITSM Webex notification)
+                escalate_incident(alert_data)
+                
+                # 4. Force the app to instantly reload from top to bottom
                 if hasattr(st, 'rerun'):
                     st.rerun()
                 else:

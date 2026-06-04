@@ -1,7 +1,14 @@
-# test_run.py
+# tests/test_run.py
+import sys
+from pathlib import Path
+
+# Dynamically find the root project folder and add it to Python's path
+root_path = Path(__file__).resolve().parent.parent
+sys.path.append(str(root_path))
+
 from core.auth import get_auth_token
-from core.inventory import get_network_devices, get_device_interfaces
-from core.port_manager import change_port_state
+from core.telemetry import get_network_devices, get_device_interfaces
+from core.remediation import change_port_state
 
 def main():
     print("--- Starting Catalyst PortOps Sentinel Core Test ---")
